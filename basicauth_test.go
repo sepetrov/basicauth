@@ -84,8 +84,8 @@ func TestProtect(t *testing.T) {
 				t.Errorf("#%d got header \"%s: %s\", want \"%s: %s\"", i, k, v, k, w.Header().Get(k))
 			}
 		}
-		if test.body != strings.TrimSpace(w.Body.String()) {
-			t.Errorf("#%d got body \"%s\", want \"%s\"", i, strings.TrimSpace(w.Body.String()), test.body)
+		if body := strings.TrimSpace(w.Body.String()); test.body != body {
+			t.Errorf("#%d got body \"%s\", want \"%s\"", i, body, test.body)
 		}
 	}
 }
@@ -110,8 +110,8 @@ func TestBasicAuthProtect(t *testing.T) {
 				t.Errorf("#%d got header \"%s: %s\", want \"%s: %s\"", i, k, v, k, w.Header().Get(k))
 			}
 		}
-		if test.body != strings.TrimSpace(w.Body.String()) {
-			t.Errorf("#%d got body \"%s\", want \"%s\"", i, strings.TrimSpace(w.Body.String()), test.body)
+		if body := strings.TrimSpace(w.Body.String()); test.body != body {
+			t.Errorf("#%d got body \"%s\", want \"%s\"", i, body, test.body)
 		}
 	}
 }
