@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -21,36 +22,45 @@ func (p provider) Find(u []byte) (Credentials, error) {
 	return Credentials{}, fmt.Errorf("Can not find user %s", u)
 }
 
-var h http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {}
+const body = "Hello!"
+
+var h http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, body)
+}
 var tests = [...]struct {
 	users users
 	req   headers
 	code  int
 	res   headers
+	body  string
 }{
 	{
 		users: users{},
 		req:   headers{},
 		code:  http.StatusUnauthorized,
 		res:   headers{"WWW-Authenticate": `Basic realm="` + realm + `"`},
+		body:  http.StatusText(http.StatusUnauthorized),
 	},
 	{
 		users: users{},
 		req:   headers{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte("user:password"))},
 		code:  http.StatusUnauthorized,
 		res:   headers{"WWW-Authenticate": `Basic realm="` + realm + `"`},
+		body:  http.StatusText(http.StatusUnauthorized),
 	},
 	{
 		users: users{"foo": "bar"},
 		req:   headers{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte("user:password"))},
 		code:  http.StatusUnauthorized,
 		res:   headers{"WWW-Authenticate": `Basic realm="` + realm + `"`},
+		body:  http.StatusText(http.StatusUnauthorized),
 	},
 	{
 		users: users{"foo": "bar", "user": "password"},
 		req:   headers{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte("user:password"))},
 		code:  http.StatusOK,
 		res:   headers{"WWW-Authenticate": ""},
+		body:  body,
 	},
 }
 
@@ -74,6 +84,9 @@ func TestProtect(t *testing.T) {
 				t.Errorf("#%d got header \"%s: %s\", want \"%s: %s\"", i, k, v, k, w.Header().Get(k))
 			}
 		}
+		if test.body != strings.TrimSpace(w.Body.String()) {
+			t.Errorf("#%d got body \"%s\", want \"%s\"", i, strings.TrimSpace(w.Body.String()), test.body)
+		}
 	}
 }
 
@@ -96,6 +109,9 @@ func TestBasicAuthProtect(t *testing.T) {
 			if v != w.Header().Get(k) {
 				t.Errorf("#%d got header \"%s: %s\", want \"%s: %s\"", i, k, v, k, w.Header().Get(k))
 			}
+		}
+		if test.body != strings.TrimSpace(w.Body.String()) {
+			t.Errorf("#%d got body \"%s\", want \"%s\"", i, strings.TrimSpace(w.Body.String()), test.body)
 		}
 	}
 }
